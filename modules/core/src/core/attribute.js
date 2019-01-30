@@ -1,8 +1,16 @@
 /* eslint-disable complexity */
 import GL from '@luma.gl/constants';
-import {Buffer} from '../webgl';
+import {Accessor, Buffer} from '../webgl';
 import {log, uid} from '../utils';
 import {hasFeature, FEATURES} from '../webgl-context/context-features';
+
+const ACCESSOR_DEFAULTS = {
+  offset: 0,
+  stride: 0,
+  normalized: false,
+  integer: false,
+  divisor: 0
+};
 
 export default class Attribute {
   constructor(gl, props = {}) {
@@ -15,22 +23,27 @@ export default class Attribute {
     this.isIndexed = isIndexed;
     this.target = isIndexed ? GL.ELEMENT_ARRAY_BUFFER : GL.ARRAY_BUFFER;
 
-    // Initialize the attribute accessor
-    this.accessor = {};
-    this.accessor.type = type;
-    if (isIndexed && !type) {
-      // If the attribute is indices, auto infer the correct type
-      // WebGL2 and WebGL1 w/ uint32 index extension support accepts Uint32Array, otherwise Uint16Array
-      this.accessor.type =
-        gl && hasFeature(gl, FEATURES.ELEMENT_INDEX_UINT32) ? GL.UNSIGNED_INT : GL.UNSIGNED_SHORT;
-    }
-
+    this.constant = false;
     this.value = null;
     this.externalBuffer = null;
     this.buffer = null;
     this.userData = {}; // Reserved for application
+    this.accessor = new Accessor(ACCESSOR_DEFAULTS);
 
     this.update(props);
+
+    // Update the attribute accessor
+    const accessorFields = {type};
+    // If the attribute contains indices, auto infer the correct type
+    // WebGL2 and WebGL1 w/ uint32 index extension support accepts Uint32Array, otherwise Uint16Array
+    if (isIndexed && !type) {
+      accessorFields.type =
+        accessorFields.type || (gl && hasFeature(gl, FEATURES.ELEMENT_INDEX_UINT32))
+          ? GL.UNSIGNED_INT
+          : GL.UNSIGNED_SHORT;
+    }
+
+    this.accessor = new Accessor(this.accessor, accessorFields);
 
     // Sanity - don't allow app fields. Use userData instead.
     Object.seal(this);
@@ -44,17 +57,28 @@ export default class Attribute {
   }
 
   update(props) {
-    // TODO - clean up this mess!
-    const {constant = this.constant || false} = props;
-    this.constant = constant;
-
-    if (props.buffer) {
-      this._setBuffer(props.buffer);
-    } else if (props.value) {
-      this._setValue(props.value, constant, props);
+    // TODO - refactored this code
+    // const {constant = this.constant || false} = props;
+    //  this.constant = constant;
+    if ('constant' in props) {
+      this.constant = Boolean(props.constant);
     }
 
-    this._setAccessor(props);
+    if (props.buffer) {
+      this._setExternalBuffer(props.buffer);
+    } else if (props.value) {
+      if (this.constant) {
+        this._setConstant(props.value);
+      } else {
+        this._setBuffer(props.value, props);
+      }
+    }
+
+    if (props.accessor) {
+      this.accessor = new Accessor(props.accessor);
+    }
+
+    this._setAccessorFromInlineProps(props);
   }
 
   getBuffer() {
@@ -77,21 +101,24 @@ export default class Attribute {
 
   // PRIVATE HELPERS
 
-  _setBuffer(buffer) {
+  _setExternalBuffer(buffer) {
     this.externalBuffer = buffer;
     this.constant = false;
 
-    this.accessor.type = buffer.accessor.type;
+    const accessorFields = {};
+    accessorFields.type = buffer.accessor.type;
     if (buffer.accessor.divisor !== undefined) {
-      this.accessor.divisor = buffer.accessor.divisor;
+      accessorFields.divisor = buffer.accessor.divisor;
     }
+
+    this.accessor = new Accessor(this.accessor, accessorFields);
   }
 
-  _setValue(value, constant, props) {
+  _setBuffer(value, props) {
     this.externalBuffer = null;
     this.value = value;
 
-    if (!constant && this.gl) {
+    if (this.gl) {
       // Create buffer if needed
       if (!this.buffer) {
         this.buffer = new Buffer(
@@ -104,115 +131,105 @@ export default class Attribute {
         );
       }
       this.buffer.setData({data: value});
-      this.accessor.type = this.buffer.accessor.type;
+      this.accessor = new Accessor(this.accessor, {type: this.buffer.accessor.type});
     }
   }
 
-  // Sets all accessor props except type
-  _setAccessor(props) {
-    const {
-      // accessor props
-      size = this.size,
-      offset = this.offset || 0,
-      stride = this.stride || 0,
-      normalized = this.normalized || false,
-      integer = this.integer || false,
-      divisor = this.divisor || 0,
-      instanced,
-      isInstanced
-    } = props;
+  _setConstant(value) {
+    this.externalBuffer = null;
+    this.value = value;
+  }
+
+  // DEPRECATED: Sets all accessor fields from inline props except type
+  _setAccessorFromInlineProps(props) {
+    // const {
+    //   // accessor props
+    //   size = this.size,
+    //   offset = this.offset || 0,
+    //   stride = this.stride || 0,
+    //   normalized = this.normalized || false,
+    //   integer = this.integer || false,
+    //   divisor = this.divisor || 0,
+    //   instanced,
+    //   isInstanced
+    // } = props;
 
     // TODO - Move to using accessors directly
     // if (props.accessor) {
     //   this.accessor = props.accessor;
     // }
 
-    this.accessor.size = size;
-    this.accessor.offset = offset;
-    this.accessor.stride = stride;
-    this.accessor.normalized = normalized;
-    this.accessor.integer = integer;
-
-    this.accessor.divisor = divisor;
-
-    if (isInstanced !== undefined) {
-      log.deprecated('Attribute.isInstanced', 'attribute.divisor')();
-      this.accessor.divisor = isInstanced ? 1 : 0;
-    }
-    if (instanced !== undefined) {
-      log.deprecated('Attribute.instanced', 'attribute.divisor')();
-      this.accessor.divisor = instanced ? 1 : 0;
-    }
+    this.accessor = new Accessor(this.accessor, props);
   }
 
   // TEMPORARY - Keep deck.gl from breaking - remove as soon as tested
   get type() {
-    log.deprecated('Attribute.type', 'Attribute.accessor')();
+    log.deprecated('Attribute.type', 'Attribute.accessor.type')();
     return this.accessor.type;
   }
 
   set type(value) {
-    log.deprecated('Attribute.type', 'Attribute.accessor')();
+    log.deprecated('Attribute.type', 'Attribute.accessor.type')();
     this.accessor.type = value;
   }
 
   get size() {
-    log.deprecated('Attribute.size', 'Attribute.accessor')();
+    log.deprecated('Attribute.size', 'Attribute.accessor.size')();
     return this.accessor.size;
   }
 
   set size(value) {
-    log.deprecated('Attribute.size', 'Attribute.accessor')();
+    log.deprecated('Attribute.size', 'Attribute.accessor.size')();
     this.accessor.size = value;
   }
 
   get offset() {
-    log.deprecated('Attribute.offset', 'Attribute.accessor')();
+    log.deprecated('Attribute.offset', 'Attribute.accessor.offset')();
     return this.accessor.offset;
   }
 
   set offset(value) {
-    log.deprecated('Attribute.offset', 'Attribute.accessor')();
+    log.deprecated('Attribute.offset', 'Attribute.accessor.offset')();
     this.accessor.offset = value;
   }
 
   get stride() {
-    log.deprecated('Attribute.stride', 'Attribute.accessor')();
+    log.deprecated('Attribute.stride', 'Attribute.accessor.stride')();
     return this.accessor.stride;
   }
 
   set stride(value) {
-    log.deprecated('Attribute.stride', 'Attribute.accessor')();
+    log.deprecated('Attribute.stride', 'Attribute.accessor.stride')();
     this.accessor.stride = value;
   }
 
   get normalized() {
-    log.deprecated('Attribute.normalized', 'Attribute.accessor')();
+    log.deprecated('Attribute.normalized', 'Attribute.accessor.normalized')();
     return this.accessor.normalized;
   }
 
   set normalized(value) {
-    log.deprecated('Attribute.normalized', 'Attribute.accessor')();
+    log.deprecated('Attribute.normalized', 'Attribute.accessor.normalized')();
     this.accessor.normalized = value;
   }
 
   get integer() {
-    log.deprecated('Attribute.integer', 'Attribute.accessor')();
+    log.deprecated('Attribute.integer', 'Attribute.accessor.integer')();
     return this.accessor.integer;
   }
 
   set integer(value) {
-    log.deprecated('Attribute.integer', 'Attribute.accessor')();
+    log.deprecated('Attribute.integer', 'Attribute.accessor.integer')();
     this.accessor.integer = value;
   }
 
   get divisor() {
-    log.deprecated('Attribute.divisor', 'Attribute.accessor')();
+    log.deprecated('Attribute.divisor', 'Attribute.accessor.divisor')();
     return this.accessor.divisor;
   }
 
   set divisor(value) {
-    log.deprecated('Attribute.divisor', 'Attribute.accessor')();
+    log.deprecated('Attribute.divisor', 'Attribute.accessor.divisor')();
     this.accessor.divisor = value;
   }
 }

@@ -32,6 +32,9 @@ export {clear} from './clear';
 
 export {parseUniformName, getUniformSetter} from './uniforms';
 
+// Accessor objects
+export {default as Accessor} from './accessor';
+
 // WebGL1 objects
 export {default as Buffer} from './buffer';
 export {Shader, VertexShader, FragmentShader} from './shader';
