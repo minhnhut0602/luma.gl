@@ -30,6 +30,7 @@ export default class Attribute {
     this.userData = {}; // Reserved for application
     this.accessor = new Accessor(ACCESSOR_DEFAULTS);
 
+    // NOTE: this line will copy inline accessor props / props.accessor to this.accessor
     this.update(props);
 
     // Update the attribute accessor
@@ -142,23 +143,6 @@ export default class Attribute {
 
   // DEPRECATED: Sets all accessor fields from inline props except type
   _setAccessorFromInlineProps(props) {
-    // const {
-    //   // accessor props
-    //   size = this.size,
-    //   offset = this.offset || 0,
-    //   stride = this.stride || 0,
-    //   normalized = this.normalized || false,
-    //   integer = this.integer || false,
-    //   divisor = this.divisor || 0,
-    //   instanced,
-    //   isInstanced
-    // } = props;
-
-    // TODO - Move to using accessors directly
-    // if (props.accessor) {
-    //   this.accessor = props.accessor;
-    // }
-
     this.accessor = new Accessor(this.accessor, props);
   }
 
