@@ -101,9 +101,8 @@ test('Core#Attribute update/read props (DEPRECATED)', t => {
   attribute.update({buffer});
   t.is(attribute.divisor, 1, 'divisor prop is updated using buffer prop');
 
-  t.end()
-})
-
+  t.end();
+});
 
 test('Core#Attribute getBuffer', t => {
   const {gl} = fixture;
