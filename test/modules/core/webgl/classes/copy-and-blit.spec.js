@@ -152,10 +152,8 @@ function testCopyToBuffer(t, bufferCreation) {
       height: 1,
       data: sourceIsFramebuffer ? null : new Float32Array(clearColor)
     });
-    const pbo = new Buffer(gl, {
-      bytes: dataBytes,
-      type: GL.FLOAT
-    });
+    const pbo = new Buffer(gl, {byteLength: dataBytes, accessor: {type: GL.FLOAT}});
+
     if (sourceIsFramebuffer) {
       const framebuffer = new Framebuffer(gl, {
         attachments: {

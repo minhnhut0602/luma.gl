@@ -139,8 +139,7 @@ function mouseleave(e) {
 const animationLoop = new AnimationLoop({
   glOptions: {
     webgl2: true,
-    webgl1: true,
-    debug: true
+    webgl1: false
   },
 
   createFramebuffer: true,
@@ -187,10 +186,10 @@ const animationLoop = new AnimationLoop({
 
     }
 
-    const positionBuffer = new Buffer(gl, {data: trianglePositions});
-    const colorBuffer = new Buffer(gl, {data: instanceColors, instanced: 1});
-    const offsetBuffer = new Buffer(gl, {data: instanceOffsets});
-    const rotationBuffer = new Buffer(gl, {data: instanceRotations});
+    const positionBuffer = new Buffer(gl, trianglePositions);
+    const colorBuffer = new Buffer(gl, {data: instanceColors, accessor: {divisor: 1}});
+    const offsetBuffer = new Buffer(gl, instanceOffsets);
+    const rotationBuffer = new Buffer(gl, instanceRotations);
 
     const renderModel = new Model(gl, {
       id: 'RenderModel',
@@ -205,7 +204,7 @@ const animationLoop = new AnimationLoop({
         a_color: colorBuffer,
         a_offset: offsetBuffer,
         a_rotation: rotationBuffer,
-        instancePickingColors: {value: pickingColors, size: 2, instanced: 1}
+        instancePickingColors: {value: pickingColors, accessor: {divisor: 1}}
       },
       modules: [picking]
     });
@@ -257,7 +256,7 @@ const animationLoop = new AnimationLoop({
       }
     });
 
-    transform.swapBuffers();
+    transform.swap();
 
     const offsetBuffer = transform.getBuffer('v_offset');
     const rotationBuffer = transform.getBuffer('v_rotation');

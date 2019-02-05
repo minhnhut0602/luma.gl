@@ -68,7 +68,7 @@ test('WebGL#Attribute update', t => {
   t.is(attribute.divisor, 0, 'divisor prop is updated');
 
   // gpu aggregation use case
-  buffer = new Buffer(gl, {bytes: 1024, type: GL.FLOAT, instanced: 1});
+  buffer = new Buffer(gl, {byteLength: 1024, type: GL.FLOAT, instanced: 1});
   attribute.update({buffer});
   t.is(attribute.divisor, 1, 'divisor prop is updated using buffer prop');
 

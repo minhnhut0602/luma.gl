@@ -40,11 +40,17 @@ export default class Accessor {
   // All props will be set in the returned object.
   // TODO check for conflicts between values in the supplied accessors
   static resolve(...accessors) {
-    return new Accessor(...[DEFAULT_ACCESSOR_VALUES, ...accessors]); // Default values
+    return new Accessor(...accessors, DEFAULT_ACCESSOR_VALUES); // Default values
   }
 
   constructor(...accessors) {
-    accessors.forEach(accessor => this._assign(accessor)); // Merge in sequence
+    accessors.forEach(accessor => {
+      if (accessor === DEFAULT_ACCESSOR_VALUES) {
+        this._addDefaultValues();
+      } else {
+        this._assign(accessor); // Merge in sequence
+      }
+    });
     Object.freeze(this);
   }
 
@@ -71,7 +77,7 @@ export default class Accessor {
 
     // TYPE - not expected to be overridden
     if (props.type !== undefined) {
-      if (props.type !== this.type) {
+      if (this.type !== undefined && props.type !== this.type) {
         log.warn('accessor type mismatch')();
       }
       this.type = props.type;
@@ -84,7 +90,7 @@ export default class Accessor {
 
     // SIZE - not expected to be overridden
     if (props.size !== undefined) {
-      if (this.size !== props.size) {
+      if (this.size !== undefined && this.size !== props.size) {
         log.warn('accessor size mismatch')();
       }
       this.size = props.size;
@@ -131,6 +137,16 @@ export default class Accessor {
       this.divisor = props.isInstanced ? 1 : 0;
     }
 
+    return this;
+  }
+
+  // Fill in any missing values with defaults
+  _addDefaultValues() {
+    for (const key in DEFAULT_ACCESSOR_VALUES) {
+      if (this[key] === undefined) {
+        this[key] = DEFAULT_ACCESSOR_VALUES[key];
+      }
+    }
     return this;
   }
 }

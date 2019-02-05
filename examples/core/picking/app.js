@@ -26,12 +26,11 @@ const PLANETS = [
 ];
 
 let pickedModelId = '';
+let pickingColors = null;
 
 const animationLoop = new AnimationLoop({
   createFramebuffer: true,
   onInitialize: ({gl, canvas}) => {
-    // Use non zero pickingColor to identify if the model has been picked or not.
-    const pickingColorsData = new Float32Array(10000).fill(1.0);
 
     const shaderCache = new ShaderCache({gl});
 
@@ -52,23 +51,32 @@ const animationLoop = new AnimationLoop({
         }
       });
 
-      return new Sphere(gl, {
+      const sphere = new Sphere(gl, {
         id: planet.name,
         nlat: 32,
         nlong: 32,
         radius: 1,
         pickable: true,
-        attributes: {
-          colors: new Buffer(gl, {size: 4, data: new Float32Array(10000)}),
-          pickingColors: new Buffer(gl, {size: 3, data: pickingColorsData})
-        },
         modules: [project, diffuse, picking],
         moduleSettings: {
           diffuseTexture,
           pickingThreshold: 0
         },
         shaderCache
-      })
+      });
+
+
+      // Create a shared pickingColorBuffer
+      // Use non zero pickingColor to identify if the model has been picked or not.
+      // TODO - this should not be needed, update picking module to support uniform valued picking colors
+      const vertexCount = sphere.getVertexCount();
+      pickingColors = pickingColors || new Buffer(gl, new Float32Array(vertexCount * 3).fill(1.0));
+
+      return sphere.setProps({
+        attributes: {
+          pickingColors
+        },
+      });
     }
 
     return {

@@ -57,7 +57,7 @@ test('pack#floatToRGBA8tofloat)', t => {
   const inputData = new Float32Array(TEST_DATA);
   const elementCount = inputData.length;
   const input = new Buffer(gl, inputData);
-  const output = new Buffer(gl, {bytes: elementCount * 4});
+  const output = new Buffer(gl, {byteLength: elementCount * 4});
 
   const transform = new Transform(gl, {
     sourceBuffers: {

@@ -76,8 +76,7 @@ let isDemoSupported = true;
 const animationLoop = new AnimationLoop({
   glOptions: {
     webgl2: true,
-    webgl1: true,
-    debug: true
+    webgl1: false
   },
 
   // eslint-disable-next-line
@@ -88,11 +87,11 @@ const animationLoop = new AnimationLoop({
       return {};
     }
     // ---- SETUP BUFFERS ---- //
-    const bytes = POSITIONS.length * FLOAT_SIZE;
+    const byteLength = POSITIONS.length * FLOAT_SIZE;
     const buffers = {
-      vertex: new Buffer(gl, {data: new Float32Array(POSITIONS)}),
-      position: new Buffer(gl, {bytes, type: gl.FLOAT, usage: gl.STATIC_COPY}),
-      color: new Buffer(gl, {bytes, type: gl.FLOAT, usage: gl.STATIC_COPY})
+      vertex: new Buffer(gl, new Float32Array(POSITIONS)),
+      position: new Buffer(gl, {byteLength, usage: gl.STATIC_COPY}),
+      color: new Buffer(gl, {byteLength, usage: gl.STATIC_COPY})
     };
 
     // first pass, offscreen, no rasterization, vertices processing only
