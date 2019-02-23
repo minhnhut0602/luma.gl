@@ -74,26 +74,19 @@ class GLTFEnv {
     return 'https://raw.githubusercontent.com/KhronosGroup/glTF-WebGL-PBR/master/textures/brdfLUT.png';
   }
 
-  makeCube(id, func) {
-    return Promise.all([
-      func('right'),
-      func('top'),
-      func('front'),
-      func('left'),
-      func('bottom'),
-      func('back')
-    ]).then(faces => {
-      return new TextureCube(this.gl, {
-        id,
-        pixels: {
-          [this.gl.TEXTURE_CUBE_MAP_POSITIVE_X]: faces[0],
-          [this.gl.TEXTURE_CUBE_MAP_POSITIVE_Y]: faces[1],
-          [this.gl.TEXTURE_CUBE_MAP_POSITIVE_Z]: faces[2],
-          [this.gl.TEXTURE_CUBE_MAP_NEGATIVE_X]: faces[3],
-          [this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Y]: faces[4],
-          [this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Z]: faces[5]
-        }
-      });
+  makeCube(id, getTextureForFace) {
+    return new TextureCube(this.gl, {
+      id,
+      pixels: {
+        [this.gl.TEXTURE_CUBE_MAP_POSITIVE_X]: getTextureForFace('right'),
+        [this.gl.TEXTURE_CUBE_MAP_NEGATIVE_X]: getTextureForFace('left'),
+
+        [this.gl.TEXTURE_CUBE_MAP_POSITIVE_Y]: getTextureForFace('top'),
+        [this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Y]: getTextureForFace('bottom'),
+
+        [this.gl.TEXTURE_CUBE_MAP_POSITIVE_Z]: getTextureForFace('front'),
+        [this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Z]: getTextureForFace('back')
+      }
     });
   }
 
@@ -160,8 +153,8 @@ class GLTFMaterialParser {
 
     if (ibl) {
       this.env = new GLTFEnv(gl);
-      // u_DiffuseEnvSampler: this.env.getDiffuseEnvSampler(),
-      // u_SpecularEnvSampler: this.env.getSpecularEnvSampler(),
+      this.uniforms.u_DiffuseEnvSampler = this.env.getDiffuseEnvSampler();
+      this.uniforms.u_SpecularEnvSampler = this.env.getSpecularEnvSampler();
       this.uniforms.u_brdfLUT = this.env.getBrdfTex();
       this.uniforms.u_ScaleIBLAmbient = [1, 1];
     }
@@ -289,20 +282,6 @@ export function createGLTFModel(
 
   model.setProps({attributes});
   model.setUniforms(materialParser.uniforms);
-
-  if (ibl) {
-    materialParser.env.getDiffuseEnvSampler().then(cubeTex => {
-      model.setUniforms({
-        u_DiffuseEnvSampler: cubeTex
-      });
-    });
-
-    materialParser.env.getSpecularEnvSampler().then(cubeTex => {
-      model.setUniforms({
-        u_SpecularEnvSampler: cubeTex
-      });
-    });
-  }
 
   return model;
 }
