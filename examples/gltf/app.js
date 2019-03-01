@@ -1,6 +1,6 @@
 import {GLTFParser} from '@loaders.gl/gltf';
 import {DracoDecoder} from '@loaders.gl/draco';
-import {AnimationLoop, setParameters, clear, createGLTFObjects, log} from 'luma.gl';
+import {_VRAnimationLoop, setParameters, clear, createGLTFObjects, log} from 'luma.gl';
 import {Matrix4, radians} from 'math.gl';
 import document from 'global/document';
 
@@ -11,6 +11,7 @@ const GLTF_MODEL_INDEX = `${GLTF_BASE_URL}model-index.json`;
 const INFO_HTML = `
 <p><b>glTF</b> rendering.</p>
 <p>A luma.gl <code>glTF</code> renderer.</p>
+<p><img src="https://img.shields.io/badge/WebVR-Supported-orange.svg" /></p>
 <div>
   Model
   <select id="modelSelector">
@@ -167,7 +168,7 @@ export class DemoApp {
     };
   }
 
-  onInitialize({gl, canvas}) {
+  onInitialize({gl, canvas, _loop: animationLoop}) {
     setParameters(gl, {
       depthTest: true,
       blend: false
@@ -208,8 +209,7 @@ export class DemoApp {
     this.initalizeEventHandling(canvas);
   }
 
-  onRender({gl, time, width, height, aspect}) {
-    gl.viewport(0, 0, width, height);
+  onRender({gl, time, aspect, vrViewMatrix, vrProjectionMatrix}) {
     clear(gl, {color: [0.2, 0.2, 0.2, 1.0], depth: true});
 
     const [pitch, roll] = this.rotation;
@@ -219,12 +219,15 @@ export class DemoApp {
       this.translate * Math.cos(roll) * Math.cos(-pitch)
     ];
 
-    const uView = new Matrix4()
+    // TODO: find how to avoid using Array.from() to convert TypedArray to regular array
+    const uView = new Matrix4(vrViewMatrix ? Array.from(vrViewMatrix) : null)
       .translate([0, 0, -this.translate])
       .rotateX(pitch)
       .rotateY(roll);
 
-    const uProjection = new Matrix4().perspective({fov: radians(40), aspect, near: 0.1, far: 9000});
+    const uProjection = vrProjectionMatrix
+      ? new Matrix4(Array.from(vrProjectionMatrix))
+      : new Matrix4().perspective({fov: radians(40), aspect, near: 0.1, far: 9000});
 
     if (!this.scenes.length) return false;
 
@@ -257,7 +260,7 @@ export class DemoApp {
   }
 }
 
-const animationLoop = new AnimationLoop(new DemoApp());
+const animationLoop = new _VRAnimationLoop(new DemoApp());
 
 animationLoop.getInfo = () => INFO_HTML;
 

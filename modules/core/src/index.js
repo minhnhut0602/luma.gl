@@ -74,6 +74,7 @@ export {default as Transform} from './core/transform';
 export {default as _Attribute} from './core/attribute';
 export {default as _ShaderCache} from './core/shader-cache';
 export {default as _AnimationLoopProxy} from './core/animation-loop-proxy';
+export {default as _VRAnimationLoop} from './core/vr-animation-loop';
 
 // SCENEGRAPH
 export {default as ScenegraphNode} from './scenegraph/scenegraph-node';
