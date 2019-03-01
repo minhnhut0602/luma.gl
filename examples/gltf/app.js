@@ -35,11 +35,20 @@ const INFO_HTML = `
   </select>
   <br>
 </div>
+<div>
+  Light
+  <select id="lightSelector">
+    <option value="default">Default</option>
+    <option value="d1">1x Directional (White)</option>
+    <option value="d3">3x Directional (RGB)</option>
+  </select>
+  <br>
+</div>
 `;
 
 const DEFAULT_OPTIONS = {
   pbrDebug: true,
-  pbrIbl: true
+  pbrIbl: false
 };
 
 async function loadGLTF(urlOrPromise, gl, options = DEFAULT_OPTIONS) {
@@ -205,7 +214,61 @@ export class DemoApp {
       };
     }
 
+    const lightSelector = document.getElementById("lightSelector");
+    if (lightSelector) {
+      lightSelector.onchange = event => {
+        this.light = lightSelector.value;
+      };
+    }
+
     this.initalizeEventHandling(canvas);
+  }
+
+  applyLight(model) {
+    // TODO: only do this when light changes
+
+    if (!this.light || this.light === 'default') {
+      model.updateModuleSettings({
+        lightSources: {
+          directionalLights: [{
+              color: [1.0, 1.0, 1.0],
+              direction: [0.0, 0.5, 0.5],
+              intensity: 1.0,
+            }
+          ]
+        }
+      });
+    } else if (this.light === 'd1') {
+      model.updateModuleSettings({
+        lightSources: {
+          directionalLights: [{
+              color: [1.0, 1.0, 1.0],
+              direction: [1.0, 0.0, 0.0],
+              intensity: 1.0,
+            }
+          ]
+        }
+      });
+    } else if (this.light === 'd3') {
+      model.updateModuleSettings({
+        lightSources: {
+          directionalLights: [{
+              color: [1.0, 0.0, 0.0],
+              direction: [1.0, 0.0, 0.0],
+              intensity: 1.0,
+            },{
+              color: [0.0, 0.0, 1.0],
+              direction: [0.0, 0.0, 1.0],
+              intensity: 1.0,
+            },{
+              color: [0.0, 1.0, 0.0],
+              direction: [0.0, 1.0, 0.0],
+              intensity: 1.0,
+            }
+          ]
+        }
+      });
+    }
   }
 
   onRender({gl, time, width, height, aspect}) {
