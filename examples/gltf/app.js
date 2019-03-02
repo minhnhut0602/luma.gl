@@ -224,7 +224,7 @@ export class DemoApp {
       model.updateModuleSettings({
         lightSources: {
           directionalLights: [{
-              color: [1.0, 1.0, 1.0],
+              color: [255, 255, 255],
               direction: [0.0, 0.5, 0.5],
               intensity: 1.0,
             }
@@ -235,7 +235,7 @@ export class DemoApp {
       model.updateModuleSettings({
         lightSources: {
           directionalLights: [{
-              color: [1.0, 1.0, 1.0],
+              color: [255, 255, 255],
               direction: [1.0, 0.0, 0.0],
               intensity: 1.0,
             }
@@ -246,15 +246,15 @@ export class DemoApp {
       model.updateModuleSettings({
         lightSources: {
           directionalLights: [{
-              color: [1.0, 0.0, 0.0],
+              color: [255, 0.0, 0.0],
               direction: [1.0, 0.0, 0.0],
               intensity: 1.0,
             },{
-              color: [0.0, 0.0, 1.0],
+              color: [0.0, 0.0, 255],
               direction: [0.0, 0.0, 1.0],
               intensity: 1.0,
             },{
-              color: [0.0, 1.0, 0.0],
+              color: [0.0, 255, 0.0],
               direction: [0.0, 1.0, 0.0],
               intensity: 1.0,
             }
