@@ -94,6 +94,9 @@ export default class GLTFMaterialParser {
       // TODO: find better values?
       u_Camera: [0, 0, 0], // Model should override
 
+      u_LightDirection: [0.0, 0.5, 0.5],
+      u_LightColor: [1.0, 1.0, 1.0],
+
       u_MetallicRoughnessValues: [1, 1] // Default is 1 and 1
     };
 

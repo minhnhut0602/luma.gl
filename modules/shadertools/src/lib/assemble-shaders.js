@@ -51,13 +51,6 @@ function assembleShader(
     coreSource = sourceLines.slice(1).join('\n');
   }
 
-  // Combine Module and Application Defines
-  const allDefines = {};
-  modules.forEach(module => {
-    Object.assign(allDefines, module.getDefines());
-  });
-  Object.assign(allDefines, defines);
-
   // Add platform defines (use these to work around platform-specific bugs and limitations)
   // Add common defines (GLSL version compatibility, feature detection)
   // Add precision declaration for fragment shaders
@@ -67,7 +60,7 @@ ${versionLine}
 ${getShaderName({id, source, type})}
 ${getPlatformShaderDefines(gl)}
 ${getVersionDefines(gl, glslVersion, !isVertex)}
-${getApplicationDefines(allDefines)}
+${getApplicationDefines(defines)}
 ${isVertex ? '' : FRAGMENT_SHADER_PROLOGUE}
 `
     : `${versionLine}

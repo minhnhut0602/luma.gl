@@ -6,7 +6,6 @@ const DEFAULT_LIGHT_POSITION = [0.0, 0.0, 1.0];
 const DEFAULT_LIGHT_DIRECTION = [0.0, 0.0, -1.0];
 const DEFAULT_LIGHT_INTENSITY = 1.0;
 const DEFAULT_LIGHT_COLOR = [255, 255, 255];
-const DEFAULT_ATTENUATION = [0, 0, 1];
 
 class LightSource extends ScenegraphNode {
   constructor(props) {
@@ -30,8 +29,7 @@ export class AmbientLight extends LightSource {}
 export class PointLight extends LightSource {
   constructor(props) {
     super(props);
-    const {position = DEFAULT_LIGHT_POSITION, attenuation = DEFAULT_ATTENUATION} = props;
+    const {position = DEFAULT_LIGHT_POSITION} = props;
     this.position = position;
-    this.attenuation = attenuation;
   }
 }
